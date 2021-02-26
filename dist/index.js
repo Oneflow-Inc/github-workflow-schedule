@@ -47,6 +47,18 @@ const has_queued_jobs = async function () {
     return num_queued_jobs > 0
 }
 
+const num_in_progress_runs = async function () {
+    runs = await octokit.request('GET /repos/{owner}/{repo}/actions/runs', {
+        owner: owner,
+        repo: repo,
+        status: "in_progress"
+    })
+        .then(r =>
+            r.data.workflow_runs
+        )
+    return runs.length
+}
+
 const has_gpu_runner = async function () {
     free_runners = await octokit.request('GET /repos/{owner}/{repo}/actions/runners', {
         owner: owner,
@@ -63,11 +75,13 @@ const sleep = __nccwpck_require__(669).promisify(setTimeout)
 async function start() {
     let i = 0;
     while (i < 1000) {
-        console.log("trying", i, "/", 1000)
-        let runner_ready = await has_gpu_runner()
-        let slot_ready = (await has_queued_jobs()) == false
-        if (runner_ready && slot_ready) {
-            break; // success
+        console.log("trying", i + 1, "/", 1000)
+        let num = await num_in_progress_runs()
+        let max_num_parallel = 1
+        if (num <= max_num_parallel) {
+            return; // success
+        } else {
+            console.log("in-progress runs:", num, ",", "max parallel runs:", max_num_parallel)
         }
         timeout = 60
         await sleep(timeout * 1000)
