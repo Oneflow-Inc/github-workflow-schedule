@@ -33,8 +33,11 @@ const num_in_progress_runs = async function () {
         jobs_all_queued = r.data.jobs.every(j => is_gpu_job(j) && j.status == "queued")
         jobs_in_progress.map(j => console.log(wr.id, "/", wr.name, "/", j.name, "/", j.status))
         schedule_job = r.data.jobs.find(j => j.name == "wait_for_gpu_slot")
-        const has_passed_scheduler = (schedule_job && schedule_job.status == "completed")
-        return (has_passed_scheduler && jobs_all_queued) || jobs_in_progress.length > 0;
+        const has_passed_scheduler = (schedule_job && schedule_job.status == "completed") && jobs_all_queued
+        if (has_passed_scheduler) {
+            console.log(wr.id, "/", wr.name, "/", "queued")
+        }
+        return has_passed_scheduler || jobs_in_progress.length > 0;
     })
     return (await Promise.all(promises)).filter(is_running => is_running).length
 }
