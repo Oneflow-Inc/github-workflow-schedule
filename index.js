@@ -43,7 +43,13 @@ async function start() {
     timeout = 2
     while (i < max_try) {
         console.log("trying", i + 1, "/", max_try)
-        let num = await num_in_progress_runs()
+        num = 100000
+        try {
+            num = await num_in_progress_runs()
+        } catch (error) {
+            console.error(error)
+            continue
+        }
         let max_num_parallel = 1
         console.log("in-progress runs:", num, ",", "max parallel runs:", max_num_parallel)
         if (num <= max_num_parallel) {
