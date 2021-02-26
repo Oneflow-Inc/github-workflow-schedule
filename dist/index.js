@@ -14,7 +14,7 @@ const repo = 'oneflow';
 function is_gpu_job(j) {
     return (["CPU", "CUDA", "XLA"].includes(j.name) || j.name == "CUDA, XLA, CPU")
 }
-// num_queue(already pass scheduler) + num_inprogess == num_max_parallel
+
 const num_in_progress_runs = async function () {
     workflow_runs = await octokit.request('GET /repos/{owner}/{repo}/actions/runs', {
         owner: owner,
@@ -46,15 +46,23 @@ const sleep = __nccwpck_require__(669).promisify(setTimeout)
 
 async function start() {
     let i = 0;
-    while (i < 1200) {
-        console.log("trying", i + 1, "/", 1200)
-        let num = await num_in_progress_runs()
+    max_try = 600
+    timeout = 2
+    while (i < max_try) {
+        console.log("trying", i + 1, "/", max_try)
+        num = 100000
+        try {
+            num = await num_in_progress_runs()
+        } catch (error) {
+            console.error(error)
+            continue
+        }
         let max_num_parallel = 1
         console.log("in-progress runs:", num, ",", "max parallel runs:", max_num_parallel)
         if (num <= max_num_parallel) {
             return; // success
         }
-        timeout = 60 * 2
+        timeout = 60 * timeout
         await sleep(timeout * 1000)
         console.log("timeout", timeout, "s")
         i++;
