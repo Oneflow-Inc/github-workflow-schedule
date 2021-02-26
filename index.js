@@ -1,11 +1,5 @@
-octokit = undefined
-if (process.env.GITHUB_TOKEN) {
-    const { Octokit } = require("@octokit/core");
-    octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-} else {
-    const { Octokit } = require("@octokit/action");
-    octokit = new Octokit();
-}
+const { Octokit } = require("@octokit/core");
+const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
 const owner = 'Oneflow-Inc';
 const repo = 'oneflow';
@@ -41,15 +35,27 @@ const has_queued_jobs = async function () {
 }
 
 const num_in_progress_runs = async function () {
-    runs = await octokit.request('GET /repos/{owner}/{repo}/actions/runs', {
+    workflow_runs = await octokit.request('GET /repos/{owner}/{repo}/actions/runs', {
         owner: owner,
         repo: repo,
         status: "in_progress"
     })
         .then(r =>
-            r.data.workflow_runs
+            r.data.workflow_runs.filter(r => r.name == "Build and Test CI")
         )
-    return runs.length
+    promises = workflow_runs.map(async wr => {
+        const r = await octokit.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs', {
+            owner: owner,
+            repo: repo,
+            run_id: wr.id
+        });
+        r.data.jobs.map(j => console.log(j.name))
+        return r.data.jobs.filter(j =>
+            (["CPU", "CUDA", "XLA"].includes(j.name) || j.name == "CUDA, XLA, CPU")
+            && j.status != "queued");
+    })
+    running_jobs_list = await Promise.all(promises)
+    return running_jobs_list.filter(jobs => jobs.length > 0).length
 }
 
 const has_gpu_runner = async function () {
@@ -71,10 +77,9 @@ async function start() {
         console.log("trying", i + 1, "/", 1000)
         let num = await num_in_progress_runs()
         let max_num_parallel = 1
+        console.log("in-progress runs:", num, ",", "max parallel runs:", max_num_parallel)
         if (num <= max_num_parallel) {
             return; // success
-        } else {
-            console.log("in-progress runs:", num, ",", "max parallel runs:", max_num_parallel)
         }
         timeout = 60
         await sleep(timeout * 1000)
