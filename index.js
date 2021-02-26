@@ -5,7 +5,12 @@ const owner = 'Oneflow-Inc';
 const repo = 'oneflow';
 
 function is_gpu_job(j) {
-    return (["CPU", "CUDA", "XLA"].includes(j.name) || j.name == "CUDA, XLA, CPU" || j.name.startsWith("CUDA, XLA, CPU"))
+    return (
+        ["CPU", "CUDA", "XLA"].includes(j.name)
+        || j.name == "CUDA, XLA, CPU"
+        || j.name.startsWith("CUDA, XLA, CPU")
+        || j.name.startsWith("Test suite")
+    )
 }
 
 const num_in_progress_runs = async function (status) {
