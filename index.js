@@ -7,7 +7,7 @@ const repo = 'oneflow';
 function is_gpu_job(j) {
     return (["CPU", "CUDA", "XLA"].includes(j.name) || j.name == "CUDA, XLA, CPU")
 }
-// num_queue(already pass scheduler) + num_inprogess == num_max_parallel
+
 const num_in_progress_runs = async function () {
     workflow_runs = await octokit.request('GET /repos/{owner}/{repo}/actions/runs', {
         owner: owner,
