@@ -37,11 +37,10 @@ const has_queued_jobs = async function () {
 const num_in_progress_runs = async function () {
     workflow_runs = await octokit.request('GET /repos/{owner}/{repo}/actions/runs', {
         owner: owner,
-        repo: repo,
-        status: "in_progress"
+        repo: repo
     })
         .then(r =>
-            r.data.workflow_runs.filter(r => r.name == "Build and Test CI")
+            r.data.workflow_runs
         )
     promises = workflow_runs.map(async wr => {
         const r = await octokit.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs', {
@@ -49,10 +48,11 @@ const num_in_progress_runs = async function () {
             repo: repo,
             run_id: wr.id
         });
-        r.data.jobs.map(j => console.log(j.name))
-        return r.data.jobs.filter(j =>
+        jobs = r.data.jobs.filter(j =>
             (["CPU", "CUDA", "XLA"].includes(j.name) || j.name == "CUDA, XLA, CPU")
-            && j.status != "queued");
+            && j.status == "in_progress")
+        jobs.map(j => console.log(wr.id, "*", wr.name, "*", j.name, "*", j.status))
+        return jobs;
     })
     running_jobs_list = await Promise.all(promises)
     return running_jobs_list.filter(jobs => jobs.length > 0).length
