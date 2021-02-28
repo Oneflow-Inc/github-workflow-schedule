@@ -30,6 +30,7 @@ const num_in_progress_runs = async function (statuses) {
         )
     )).flat()
 
+    var table = new Table();
     promises = workflow_runs
         .map(async wr => {
             const r = await octokit.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs', {
@@ -37,10 +38,19 @@ const num_in_progress_runs = async function (statuses) {
                 repo: repo,
                 run_id: wr.id
             });
+            pull_requests = wr.pull_requests
+            if (pull_requests.length == 0) {
+                pull_requests = [{ number: "?" }]
+            }
             pr = wr.pull_requests.map(pr => "#" + pr.number).join(", ")
-            var table = new Table();
-            r.data.jobs.map(j => table.push([pr, wr.id, wr.status, wr.name, j.name, j.status]))
-            console.log(table.toString());
+            r.data.jobs.map((j, job_i) => table.push([
+                job_i == 0 ? wr.id : "",
+                job_i == 0 ? pr : "",
+                job_i == 0 ? wr.status : "",
+                job_i == 0 ? wr.name : "",
+                j.name,
+                j.status]))
+
             jobs_in_progress = r.data.jobs.filter(j => is_gpu_job(j) && j.status == "in_progress")
             jobs_all_queued = r.data.jobs.filter(j => is_gpu_job(j)).every(j => j.status == "queued" || j.status == "in_progress")
             schedule_job = r.data.jobs.find(j => j.name == "Wait for GPU slots")
@@ -48,6 +58,7 @@ const num_in_progress_runs = async function (statuses) {
             return has_passed_scheduler || jobs_in_progress.length > 0;
         })
     is_running_list = await Promise.all(promises)
+    console.log(table.toString());
     var table = new Table();
     workflow_runs
         .map((wr, i) => {
