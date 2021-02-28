@@ -64,7 +64,7 @@ async function start() {
             continue
         }
         let max_num_parallel = 1
-        console.log("in-progress runs:", num, ",", "max parallel runs:", max_num_parallel)
+        console.log("runs:", num, ",", "max:", max_num_parallel)
         if (num <= max_num_parallel) {
             return; // success
         }
