@@ -27,7 +27,7 @@ const num_in_progress_runs = async function (status) {
                     run_id: wr.id
                 });
                 pr = wr.pull_requests.map(pr => "#" + pr.number).join(", ")
-                r.data.jobs.map(j => console.log(pr, "/", wr.status, wr.id, "/", wr.name, "/", j.name, "/", j.status))
+                r.data.jobs.map(j => console.log(pr, "/", wr.id, "/", wr.status, "/", wr.name, "/", j.name, "/", j.status))
                 jobs_in_progress = r.data.jobs.filter(j => is_gpu_job(j) && j.status == "in_progress")
                 jobs_all_queued = r.data.jobs.filter(j => is_gpu_job(j)).every(j => j.status == "queued" || j.status == "in_progress")
                 schedule_job = r.data.jobs.find(j => j.name == "Wait for GPU slots")
