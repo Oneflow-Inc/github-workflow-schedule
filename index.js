@@ -44,9 +44,9 @@ const num_in_progress_runs = async function (statuses) {
     var table = new Table();
     workflow_runs
         .map((wr, i) => {
-            is_running = is_running_list[i] ? "running" : ""
-            pr = wr.pull_requests.map(pr => "#" + pr.number).join(", ")
-            table.push([pr, is_running])
+            pr = wr.pull_requests.map((pr, i) => {
+                table.push([i == 0 ? wr.id : "", i == 0 ? (is_running_list[i] ? "running" : "") : "", "#" + pr.number, pr.url])
+            })
         })
     console.log(table.toString());
     return is_running_list.filter(is_running => is_running).length
