@@ -51,7 +51,7 @@ const sleep = __nccwpck_require__(669).promisify(setTimeout)
 async function start() {
     let i = 0;
     const max_try = 600
-    const timeout_minutes = 2
+    const timeout_minutes = 1
     while (i < max_try) {
         console.log("trying", i + 1, "/", max_try)
         num = 100000
