@@ -45,7 +45,7 @@ const num_in_progress_runs = async function (statuses) {
     workflow_runs
         .map((wr, i) => {
             pr = wr.pull_requests.map((pr, i) => {
-                table.push([i == 0 ? wr.id : "", i == 0 ? (is_running_list[i] ? "running" : "") : "", "#" + pr.number, pr.url])
+                table.push([i == 0 ? wr.id : "", i == 0 ? (is_running_list[i] ? "running" : "") : "", "#" + pr.number, "https://github.com/Oneflow-Inc/oneflow/pull/" + pr.number])
             })
         })
     console.log(table.toString());
