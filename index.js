@@ -36,7 +36,13 @@ const num_in_progress_runs = async function (statuses) {
                 pull_requests = [{ number: "?" }]
             }
             pr = wr.pull_requests.map(pr => "#" + pr.number).join(", ")
-            r.data.jobs.map(j => table.push([wr.id, pr, wr.status, wr.name, j.name, j.status]))
+            r.data.jobs.map((j, job_i) => table.push([
+                job_i == 0 ? wr.id : "",
+                job_i == 0 ? pr : "",
+                job_i == 0 ? wr.status : "",
+                job_i == 0 ? wr.name : "",
+                j.name,
+                j.status]))
 
             jobs_in_progress = r.data.jobs.filter(j => is_gpu_job(j) && j.status == "in_progress")
             jobs_all_queued = r.data.jobs.filter(j => is_gpu_job(j)).every(j => j.status == "queued" || j.status == "in_progress")
