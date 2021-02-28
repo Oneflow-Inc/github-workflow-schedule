@@ -13,45 +13,43 @@ function is_gpu_job(j) {
     )
 }
 
-const num_in_progress_runs = async function (status) {
-    return await octokit.request('GET /repos/{owner}/{repo}/actions/runs', {
-        owner: owner,
-        repo: repo,
-        status: status
-    })
-        .then(async r => {
-            promises = r.data.workflow_runs.map(async wr => {
-                const r = await octokit.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs', {
-                    owner: owner,
-                    repo: repo,
-                    run_id: wr.id
-                });
-                pr = wr.pull_requests.map(pr => "#" + pr.number).join(", ")
-                var table = new Table({
-                    colWidths: [10, 20]
-                });
-                r.data.jobs.map(j => table.push([pr, wr.id, wr.status, wr.name, j.name, j.status]))
-                console.log(table.toString());
-                jobs_in_progress = r.data.jobs.filter(j => is_gpu_job(j) && j.status == "in_progress")
-                jobs_all_queued = r.data.jobs.filter(j => is_gpu_job(j)).every(j => j.status == "queued" || j.status == "in_progress")
-                schedule_job = r.data.jobs.find(j => j.name == "Wait for GPU slots")
-                const has_passed_scheduler = (schedule_job && schedule_job.status == "completed") && jobs_all_queued
-                return has_passed_scheduler || jobs_in_progress.length > 0;
-            })
-            is_running_list = await Promise.all(promises)
-            var table = new Table({
-                colWidths: [10, 20]
-            });
-            r.data.workflow_runs
-                .map((wr, i) => {
-                    is_running = is_running_list[i] ? "running" : "not running"
-                    pr = wr.pull_requests.map(pr => "#" + pr.number).join(", ")
-                    table.push([pr, is_running])
-                })
-            console.log(table.toString());
-            return is_running_list.filter(is_running => is_running).length
-        }
+const num_in_progress_runs = async function (statuses) {
+    workflow_runs = (await Promise.all(
+        statuses.map(async s => await octokit.request('GET /repos/{owner}/{repo}/actions/runs', {
+            owner: owner,
+            repo: repo,
+            status: s
+        }).then(r => r.data.workflow_runs)
         )
+    )).flat()
+
+    promises = workflow_runs
+        .map(async wr => {
+            const r = await octokit.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs', {
+                owner: owner,
+                repo: repo,
+                run_id: wr.id
+            });
+            pr = wr.pull_requests.map(pr => "#" + pr.number).join(", ")
+            var table = new Table();
+            r.data.jobs.map(j => table.push([pr, wr.id, wr.status, wr.name, j.name, j.status]))
+            console.log(table.toString());
+            jobs_in_progress = r.data.jobs.filter(j => is_gpu_job(j) && j.status == "in_progress")
+            jobs_all_queued = r.data.jobs.filter(j => is_gpu_job(j)).every(j => j.status == "queued" || j.status == "in_progress")
+            schedule_job = r.data.jobs.find(j => j.name == "Wait for GPU slots")
+            const has_passed_scheduler = (schedule_job && schedule_job.status == "completed") && jobs_all_queued
+            return has_passed_scheduler || jobs_in_progress.length > 0;
+        })
+    is_running_list = await Promise.all(promises)
+    var table = new Table();
+    workflow_runs
+        .map((wr, i) => {
+            is_running = is_running_list[i] ? "running" : "pending"
+            pr = wr.pull_requests.map(pr => "#" + pr.number).join(", ")
+            table.push([pr, is_running])
+        })
+    console.log(table.toString());
+    return is_running_list.filter(is_running => is_running).length
 }
 
 const sleep = require('util').promisify(setTimeout)
@@ -64,9 +62,7 @@ async function start() {
         console.log("trying", i + 1, "/", max_try)
         num = 100000
         try {
-            num_list = await Promise.all([num_in_progress_runs("in_progress"), num_in_progress_runs("queued")])
-            console.log("in-progress", num_list[0], "in-queue", num_list[1])
-            num = num_list.reduce((a, b) => a + b, 0)
+            num = await num_in_progress_runs(["in_progress", "queued"])
         } catch (error) {
             console.log(error)
             continue
