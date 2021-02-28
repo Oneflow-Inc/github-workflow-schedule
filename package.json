@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "rel": "bash rel.sh"
+    "rel": "bash rel.sh && echo $(git rev-parse HEAD)"
   },
   "keywords": [],
   "author": "",
