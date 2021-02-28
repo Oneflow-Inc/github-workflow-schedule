@@ -14,29 +14,36 @@ function is_gpu_job(j) {
 }
 
 const num_in_progress_runs = async function (status) {
-    workflow_runs = await octokit.request('GET /repos/{owner}/{repo}/actions/runs', {
+    return await octokit.request('GET /repos/{owner}/{repo}/actions/runs', {
         owner: owner,
         repo: repo,
         status: status
     })
-        .then(r =>
+        .then(async r => {
+            promises = r.data.workflow_runs.map(async wr => {
+                const r = await octokit.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs', {
+                    owner: owner,
+                    repo: repo,
+                    run_id: wr.id
+                });
+                r.data.jobs.map(j => console.log(wr.status, wr.id, "/", wr.name, "/", j.name, "/", j.status))
+                jobs_in_progress = r.data.jobs.filter(j => is_gpu_job(j) && j.status == "in_progress")
+                jobs_all_queued = r.data.jobs.filter(j => is_gpu_job(j)).every(j => j.status == "queued" || j.status == "in_progress")
+                schedule_job = r.data.jobs.find(j => j.name == "Wait for GPU slots")
+                assert(schedule_job)
+                const has_passed_scheduler = (schedule_job && schedule_job.status == "completed") && jobs_all_queued
+                return has_passed_scheduler || jobs_in_progress.length > 0;
+            })
+            is_running_list = await Promise.all(promises)
             r.data.workflow_runs
+                .map((wr, i) => {
+                    is_running = is_running_list[i] ? "running" : "not running"
+                    pr = wr.pull_requests.map(pr => "#" + pr.number).join(", ")
+                    console.log(pr, is_running)
+                })
+            return is_running_list.filter(is_running => is_running).length
+        }
         )
-    promises = workflow_runs.map(async wr => {
-        const r = await octokit.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs', {
-            owner: owner,
-            repo: repo,
-            run_id: wr.id
-        });
-        r.data.jobs.map(j => console.log(wr.status, wr.id, "/", wr.name, "/", j.name, "/", j.status))
-        jobs_in_progress = r.data.jobs.filter(j => is_gpu_job(j) && j.status == "in_progress")
-        jobs_all_queued = r.data.jobs.filter(j => is_gpu_job(j)).every(j => j.status == "queued" || j.status == "in_progress")
-        schedule_job = r.data.jobs.find(j => j.name == "Wait for GPU slots")
-        assert(schedule_job)
-        const has_passed_scheduler = (schedule_job && schedule_job.status == "completed") && jobs_all_queued
-        return has_passed_scheduler || jobs_in_progress.length > 0;
-    })
-    return (await Promise.all(promises)).filter(is_running => is_running).length
 }
 
 const sleep = require('util').promisify(setTimeout)
