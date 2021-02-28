@@ -1,5 +1,4 @@
 const { Octokit } = require("@octokit/core");
-const { assert } = require("console");
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 const owner = 'Oneflow-Inc';
 const repo = 'oneflow';
@@ -36,17 +35,20 @@ const num_in_progress_runs = async function (status) {
                 jobs_in_progress = r.data.jobs.filter(j => is_gpu_job(j) && j.status == "in_progress")
                 jobs_all_queued = r.data.jobs.filter(j => is_gpu_job(j)).every(j => j.status == "queued" || j.status == "in_progress")
                 schedule_job = r.data.jobs.find(j => j.name == "Wait for GPU slots")
-                assert(schedule_job)
                 const has_passed_scheduler = (schedule_job && schedule_job.status == "completed") && jobs_all_queued
                 return has_passed_scheduler || jobs_in_progress.length > 0;
             })
             is_running_list = await Promise.all(promises)
+            var table = new Table({
+                colWidths: [10, 20]
+            });
             r.data.workflow_runs
                 .map((wr, i) => {
                     is_running = is_running_list[i] ? "running" : "not running"
                     pr = wr.pull_requests.map(pr => "#" + pr.number).join(", ")
-                    console.log(pr, is_running)
+                    table.push([pr, is_running])
                 })
+            console.log(table.toString());
             return is_running_list.filter(is_running => is_running).length
         }
         )
