@@ -23,6 +23,16 @@ const num_in_progress_runs = async function (statuses) {
         )
     )).flat()
 
+    if (workflow_runs.length == 0) {
+        console.log("no workflow runs found for", statuses)
+        console.log("start querying 100 workflow runs")
+        workflow_runs = (await octokit.request('GET /repos/{owner}/{repo}/actions/runs', {
+            owner: owner,
+            repo: repo,
+            per_page: 100
+        }).then(r => r.data.workflow_runs)).filter(w => statuses.includes(w.status))
+    }
+    console.log("found", workflow_runs.length, "workflow runs for", statuses)
     var table = new Table();
     promises = workflow_runs
         .map(async wr => {
