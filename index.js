@@ -13,6 +13,7 @@ function is_gpu_job(j) {
     )
 }
 
+// TODO: refactor into in_progress_runs_larger_that(1)
 const num_in_progress_runs = async function (statuses) {
     workflow_runs = (await Promise.all(
         statuses.map(async s => await octokit.request('GET /repos/{owner}/{repo}/actions/runs', {
