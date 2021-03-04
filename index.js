@@ -83,28 +83,28 @@ const sleep = require('util').promisify(setTimeout)
 
 async function start() {
   let i = 0;
-  const max_try = 600
+  const max_try = 30
   const timeout_minutes = 1
+  let max_num_parallel = 1
   while (i < max_try) {
-    console.log('trying', i + 1, '/', max_try)
+    i += 1;
+    console.log('trying', i, '/', max_try)
     num = 100000
     try {
       num = await num_in_progress_runs(['in_progress', 'queued'])
     } catch (error) {
       console.log(error)
       continue
+    } finally {
+      console.log('runs:', num, ',', 'max:', max_num_parallel)
+      if (num <= max_num_parallel) {
+        return;  // success
+      }
+      const timeout = 60 * timeout_minutes;
+      await sleep(timeout * 1000)
+      console.log('timeout', timeout, 's')
     }
-    let max_num_parallel = 1
-    console.log('runs:', num, ',', 'max:', max_num_parallel)
-    if (num <= max_num_parallel) {
-      return;  // success
-    }
-    const timeout = 60 * timeout_minutes;
-    await sleep(timeout * 1000)
-    console.log('timeout', timeout, 's')
-    i++;
   }
-  throw 'No GPU runner available for now';
 }
 
 start().catch(error => {
