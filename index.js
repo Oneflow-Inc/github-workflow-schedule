@@ -44,7 +44,8 @@ const num_in_progress_runs =
                           .request(
                               'GET /repos/{owner}/{repo}/actions/runs',
                               {owner: owner, repo: repo, status: s})
-                          .then(r => r.data.workflow_runs))))
+                          .then(r => r.data.workflow_runs)
+                          .catch(e => []))))
           .flat()
 
   if (workflow_runs.length == 0) {
