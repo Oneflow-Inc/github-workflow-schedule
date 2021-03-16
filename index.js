@@ -7,7 +7,12 @@ var Table = require('cli-table3');
 function is_gpu_job(j) {
   return (
     ['CPU', 'CUDA', 'XLA'].includes(j.name) || j.name == 'CUDA, XLA, CPU' ||
-    j.name.startsWith('CUDA, XLA, CPU') || j.name.startsWith('Test suite'))
+    j.name.startsWith('CUDA, XLA, CPU') || (
+      j.name.startsWith('Test suite') && (
+        j.name.includes("cuda") || j.name.includes("xla")
+      )
+    )
+  )
 }
 
 const is_occupying_gpu = async (wr) => {
@@ -19,11 +24,12 @@ const is_occupying_gpu = async (wr) => {
     pull_requests = [{ number: '?' }];
   }
   pr = wr.pull_requests.map(pr => '#' + pr.number).join(', ');
+  var table = new Table();
   r.data.jobs.map((j, job_i) => table.push([
     job_i == 0 ? wr.id : '', job_i == 0 ? pr : '', job_i == 0 ? wr.status : '',
     job_i == 0 ? wr.name : '', j.name, j.status
   ]));
-
+  console.log(table.toString());
   jobs_in_progress =
     r.data.jobs.filter(j => is_gpu_job(j) && j.status == 'in_progress');
   jobs_all_queued =
@@ -60,10 +66,8 @@ const num_in_progress_runs =
         .filter(w => statuses.includes(w.status))
       console.log('found', workflow_runs.length, 'workflow runs in last 100')
     }
-    var table = new Table();
     is_running_list = await Promise.all(workflow_runs.map(
-      async wr => await is_occupying_gpu(wr).catch(_ => false)))
-    console.log(table.toString());
+      async wr => await is_occupying_gpu(wr).catch(e => { console.log(e); return false })))
     var table = new Table();
     workflow_runs.map(
       (wr, wr_i) => {
@@ -89,7 +93,7 @@ async function start() {
   let i = 0;
   const max_try = 60
   const timeout_minutes = 1
-  let max_num_parallel = 1
+  let max_num_parallel = 2
   while (i < max_try) {
     i += 1;
     console.log('trying', i, '/', max_try)
@@ -101,7 +105,7 @@ async function start() {
       continue
     } finally {
       console.log('runs:', num, ',', 'max:', max_num_parallel)
-      if (num <= max_num_parallel) {
+      if (num < max_num_parallel) {
         return;  // success
       }
       const timeout = 60 * timeout_minutes;
