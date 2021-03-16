@@ -24,10 +24,11 @@ const is_occupying_gpu = async (wr) => {
     pull_requests = [{ number: '?' }];
   }
   pr = wr.pull_requests.length > 0 ? wr.pull_requests.map(pr => '#' + pr.number).join(', ') : "#?";
+  console.log(wr.id, wr.status, pr, wr.name)
+  console.log(wr.html_url)
   var table = new Table();
   r.data.jobs.map((j, job_i) => table.push([
-    job_i == 0 ? wr.id : '', job_i == 0 ? pr : '', job_i == 0 ? wr.status : '',
-    job_i == 0 ? wr.name : '', j.name, j.status
+    j.name, j.status
   ]));
   console.log(table.toString());
   jobs_in_progress =
