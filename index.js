@@ -77,7 +77,8 @@ const num_in_progress_runs =
           wr.id,
           is_running_list[wr_i] ? 'running' : '--',
           wr.pull_requests.map(pr => '#' + pr.number).join(", "),
-          wr.pull_requests.map(pr => 'https://github.com/Oneflow-Inc/oneflow/pull/' + pr.number).join("\n")
+          wr.pull_requests.map(pr => 'https://github.com/Oneflow-Inc/oneflow/pull/' + pr.number).join("\n"),
+          wr.html_url,
         ])
       })
     console.log(table.toString());
