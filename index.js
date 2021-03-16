@@ -68,18 +68,17 @@ const num_in_progress_runs =
     }
     is_running_list = await Promise.all(workflow_runs.map(
       async wr => await is_occupying_gpu(wr).catch(e => { console.log(e); return false })))
+    console.log(is_running_list)
     var table = new Table();
     workflow_runs.map(
       (wr, wr_i) => {
-        pr = wr.pull_requests.map(
-          (pr, pr_i) => {
-            table.push([
-              pr_i == 0 ? wr.id : '',
-              pr_i == 0 ? (is_running_list[wr_i] ? 'running' : '') : '',
-              '#' + pr.number,
-              'https://github.com/Oneflow-Inc/oneflow/pull/' + pr.number
-            ])
-          })
+        console.log(wr_i)
+        table.push([
+          wr.id,
+          is_running_list[wr_i] ? 'running' : '--',
+          wr.pull_requests.map(pr => '#' + pr.number).join(", "),
+          wr.pull_requests.map(pr => 'https://github.com/Oneflow-Inc/oneflow/pull/' + pr.number).join("\n")
+        ])
       })
     console.log(table.toString());
     return is_running_list.filter(is_running => is_running).length
