@@ -30,7 +30,7 @@ const is_occupying_gpu = async (wr) => {
   if (pull_requests.length == 0) {
     pull_requests = [{ number: '?' }];
   }
-  pr = wr.pull_requests.map(pr => '#' + pr.number).join(', ');
+  pr = wr.pull_requests.length > 0 ? wr.pull_requests.map(pr => '#' + pr.number).join(', ') : "#?";
   var table = new Table();
   r.data.jobs.map((j, job_i) => table.push([
     job_i == 0 ? wr.id : '', job_i == 0 ? pr : '', job_i == 0 ? wr.status : '',
@@ -78,15 +78,13 @@ const num_in_progress_runs =
     var table = new Table();
     workflow_runs.map(
       (wr, wr_i) => {
-        pr = wr.pull_requests.map(
-          (pr, pr_i) => {
-            table.push([
-              pr_i == 0 ? wr.id : '',
-              pr_i == 0 ? (is_running_list[wr_i] ? 'running' : '') : '',
-              '#' + pr.number,
-              'https://github.com/Oneflow-Inc/oneflow/pull/' + pr.number
-            ])
-          })
+        table.push([
+          wr.id,
+          is_running_list[wr_i] ? 'running' : '--',
+          wr.pull_requests.map(pr => '#' + pr.number).join(", "),
+          wr.pull_requests.map(pr => 'https://github.com/Oneflow-Inc/oneflow/pull/' + pr.number).join("\n"),
+          wr.html_url,
+        ])
       })
     console.log(table.toString());
     return is_running_list.filter(is_running => is_running).length

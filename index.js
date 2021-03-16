@@ -23,7 +23,7 @@ const is_occupying_gpu = async (wr) => {
   if (pull_requests.length == 0) {
     pull_requests = [{ number: '?' }];
   }
-  pr = wr.pull_requests.map(pr => '#' + pr.number).join(', ');
+  pr = wr.pull_requests.length > 0 ? wr.pull_requests.map(pr => '#' + pr.number).join(', ') : "#?";
   var table = new Table();
   r.data.jobs.map((j, job_i) => table.push([
     job_i == 0 ? wr.id : '', job_i == 0 ? pr : '', job_i == 0 ? wr.status : '',
@@ -68,11 +68,9 @@ const num_in_progress_runs =
     }
     is_running_list = await Promise.all(workflow_runs.map(
       async wr => await is_occupying_gpu(wr).catch(e => { console.log(e); return false })))
-    console.log(is_running_list)
     var table = new Table();
     workflow_runs.map(
       (wr, wr_i) => {
-        console.log(wr_i)
         table.push([
           wr.id,
           is_running_list[wr_i] ? 'running' : '--',
