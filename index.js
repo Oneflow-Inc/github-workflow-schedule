@@ -107,7 +107,7 @@ async function start() {
       if (num < max_num_parallel) {
         return;  // success
       }
-      const timeout = 60 * timeout_minutes;
+      const timeout = 30 * timeout_minutes;
       await sleep(timeout * 1000)
       console.log('timeout', timeout, 's')
     }
