@@ -6,7 +6,13 @@ module.exports =
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const { Octokit } = __nccwpck_require__(8622);
-const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+token = process.env.CI_PERSONAL_ACCESS_TOKEN
+if (!token) {
+  const core = __nccwpck_require__(4181);
+  core.setFailed("required CI_PERSONAL_ACCESS_TOKEN");
+  process.exit(1)
+}
+const octokit = new Octokit({ auth: token });
 const owner = 'Oneflow-Inc';
 const repo = 'oneflow';
 var Table = __nccwpck_require__(4406);

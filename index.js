@@ -1,5 +1,11 @@
 const { Octokit } = require('@octokit/core');
-const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+token = process.env.CI_PERSONAL_ACCESS_TOKEN
+if (!token) {
+  const core = require('@actions/core');
+  core.setFailed("required CI_PERSONAL_ACCESS_TOKEN");
+  process.exit(1)
+}
+const octokit = new Octokit({ auth: token });
 const owner = 'Oneflow-Inc';
 const repo = 'oneflow';
 var Table = require('cli-table3');
