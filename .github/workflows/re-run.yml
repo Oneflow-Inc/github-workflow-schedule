@@ -2,7 +2,7 @@ name: "Re-run failed job due to network"
 on:
   schedule:
     # * is a special character in YAML so you have to quote this string
-    - cron: "*/3 * * * *"
+    - cron: "*/5 * * * *"
   push:
     branches:
       - main
