@@ -30,7 +30,7 @@ async function listAll() {
                 shouldReRun = false
                 r.data.jobs.map(
                     j => j.steps.map(
-                        async s => {
+                        s => {
                             if (s.name.includes("checkout") || s.name.includes("Set up job")) {
                                 if (s.status == 'completed' && s.conclusion == 'failure') {
                                     console.log(s)
