@@ -39,6 +39,21 @@ async function listAll() {
                         }
                     )
                 )
+                // wr.pull_requests.map(async pr => {
+                //     base_sha = pr.base.sha
+                //     await octokit.request('GET /repos/{owner}/{repo}/compare/{base}...{head}', {
+                //         owner: owner,
+                //         repo: repo,
+                //         base: base_sha,
+                //         head: wr.head_sha
+                //     }).then(r => {
+                //         if (r.data.behind_by == 0) {
+                //             console.log({ ahead_by: r.data.ahead_by })
+                //         } else {
+                //             console.log({ behind_by: r.data.behind_by })
+                //         }
+                //     })
+                // })
                 if (shouldReRun) {
                     console.log(wr.html_url)
                     await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
