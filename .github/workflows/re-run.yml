@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+
 jobs:
   rerun:
     name: Rerun network failed job
@@ -16,3 +17,5 @@ jobs:
         run: |
           npm i
           npm run re-run
+        env:
+          CI_PERSONAL_ACCESS_TOKEN: ${{ secrets.CI_PERSONAL_ACCESS_TOKEN }}
