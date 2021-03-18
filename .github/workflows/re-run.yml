@@ -1,0 +1,18 @@
+name: "Re-run failed job due to network"
+on:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron: "*/3 * * * *"
+  push:
+    branches:
+      - main
+jobs:
+  rerun:
+    name: Rerun network failed job
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v2
+      - name: "re-run"
+        run: |
+          npm i
+          npm run re-run

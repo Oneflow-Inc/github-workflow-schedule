@@ -9,7 +9,7 @@ const octokit = new Octokit({ auth: token });
 const owner = 'Oneflow-Inc';
 const repo = 'oneflow';
 
-async function listAll() {
+async function reRun() {
     test_workflow_id = await octokit.request('GET /repos/{owner}/{repo}/actions/workflows', {
         owner: owner,
         repo: repo
@@ -82,11 +82,11 @@ async function start() {
     const timeout_minutes = 2
     const sleep = require('util').promisify(setTimeout)
     while (true) {
-        await listAll().catch(e => console.log(e));
+        await reRun().catch(e => console.log(e));
         const timeout = 60 * timeout_minutes;
         await sleep(timeout * 1000)
         console.log('timeout', timeout, 's')
     }
 }
 
-start()
+reRun()
