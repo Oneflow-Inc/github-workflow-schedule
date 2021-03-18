@@ -19,7 +19,7 @@ async function reRun() {
         repo: repo,
         workflow_id: test_workflow_id,
         status: "failure",
-        per_page: 30
+        per_page: 10
     }).then(r => r.data.workflow_runs.map(async wr => {
         await octokit.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs', {
             owner: owner,
@@ -40,27 +40,35 @@ async function reRun() {
                     )
                 )
                 isUpdatedPr = false
-                wr.pull_requests.map(async pr => {
-                    base_sha = pr.base.sha
-                    await octokit.request('GET /repos/{owner}/{repo}/compare/{base}...{head}', {
-                        owner: owner,
-                        repo: repo,
-                        base: base_sha,
-                        head: wr.head_sha
-                    }).then(async r => {
-                        if (r.data.behind_by == 0) {
-                            pr_detail = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
-                                owner: owner,
-                                repo: repo,
-                                pull_number: pr.number
-                            }).then(r => {
-                                if (r.data.state == "open") {
-                                    isUpdatedPr = true
-                                }
-                            })
-                        }
+                if (wr.pull_requests.length == 0) {
+                    console.log("[no pr related]", wr.html_url)
+                } else {
+                    wr.pull_requests.map(async pr => {
+                        base_sha = pr.base.sha
+                        await octokit.request('GET /repos/{owner}/{repo}/compare/{base}...{head}', {
+                            owner: owner,
+                            repo: repo,
+                            base: base_sha,
+                            head: wr.head_sha
+                        }).then(async r => {
+                            if (r.data.behind_by == 0) {
+                                pr_detail = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
+                                    owner: owner,
+                                    repo: repo,
+                                    pull_number: pr.number
+                                }).then(r => {
+                                    if (r.data.state == "open") {
+                                        isUpdatedPr = true
+                                    } else {
+                                        console.log("[pr closed]", wr.html_url)
+                                    }
+                                })
+                            } else {
+                                console.log("[pr behind base]", wr.html_url)
+                            }
+                        })
                     })
-                })
+                }
                 shouldReRun = isUpdatedPr && isNetworkFail
                 if (shouldReRun) {
                     console.log("[re-run]", wr.html_url)
