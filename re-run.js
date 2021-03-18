@@ -97,4 +97,7 @@ async function start() {
     }
 }
 
-reRun()
+reRun().catch(e => {
+    const core = require('@actions/core');
+    core.setFailed(e);
+})
