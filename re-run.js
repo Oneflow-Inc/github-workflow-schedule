@@ -66,4 +66,17 @@ async function listAll() {
         )
     }))
 }
-listAll()
+
+
+async function start() {
+    const timeout_minutes = 5
+    const sleep = require('util').promisify(setTimeout)
+    while (true) {
+        await listAll().catch(e => console.log(e));
+        const timeout = 60 * timeout_minutes;
+        await sleep(timeout * 1000)
+        console.log('timeout', timeout, 's')
+    }
+}
+
+start()
