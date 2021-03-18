@@ -33,7 +33,6 @@ async function listAll() {
                         s => {
                             if (s.name.includes("checkout") || s.name.includes("Set up job")) {
                                 if (s.status == 'completed' && s.conclusion == 'failure') {
-                                    console.log(s)
                                     shouldReRun = true
                                 }
                             }
@@ -41,6 +40,7 @@ async function listAll() {
                     )
                 )
                 if (shouldReRun) {
+                    console.log(wr.html_url)
                     await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
                         owner: owner,
                         repo: repo,
