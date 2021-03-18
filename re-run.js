@@ -19,7 +19,7 @@ async function listAll() {
         repo: repo,
         workflow_id: test_workflow_id,
         status: "failure",
-        per_page: 20
+        per_page: 30
     }).then(r => r.data.workflow_runs.map(async wr => {
         await octokit.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs', {
             owner: owner,
