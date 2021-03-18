@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node index.js",
     "re-run": "node re-run.js",
+    "runners": "node runners.js",
     "rel": "bash rel.sh && echo $(git rev-parse HEAD)"
   },
   "keywords": [],
