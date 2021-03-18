@@ -25,10 +25,22 @@ async function listAll() {
             owner: owner,
             repo: repo,
             run_id: wr.id
-        }).then(r => r.data.jobs.map(j => j.steps.map(async s => {
-            if (s.name.includes("checkout") || s.name.includes("Set up job")) {
-                if (s.status == 'completed' && s.conclusion == 'failure') {
-                    console.log(s)
+        }).then(
+            async r => {
+                shouldReRun = false
+                r.data.jobs.map(
+                    j => j.steps.map(
+                        async s => {
+                            if (s.name.includes("checkout") || s.name.includes("Set up job")) {
+                                if (s.status == 'completed' && s.conclusion == 'failure') {
+                                    console.log(s)
+                                    shouldReRun = true
+                                }
+                            }
+                        }
+                    )
+                )
+                if (shouldReRun) {
                     await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
                         owner: owner,
                         repo: repo,
@@ -36,7 +48,7 @@ async function listAll() {
                     }).then(r => console.log("rerun", r.status))
                 }
             }
-        })))
+        )
     }))
 }
 listAll()
