@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node index.js",
+    "re-run": "node re-run.js",
     "rel": "bash rel.sh && echo $(git rev-parse HEAD)"
   },
   "keywords": [],
