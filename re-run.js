@@ -71,7 +71,7 @@ async function listAll() {
 
 
 async function start() {
-    const timeout_minutes = 5
+    const timeout_minutes = 2
     const sleep = require('util').promisify(setTimeout)
     while (true) {
         await listAll().catch(e => console.log(e));
