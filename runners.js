@@ -12,7 +12,7 @@ const repo = 'oneflow';
 async function runners() {
     await octokit.request('GET /orgs/{org}/actions/runners', {
         org: owner
-    }).then(r => r.data.runners.map(runner => console.log(runner)))
+    }).then(r => r.data.runners.filter(runner => runner.status == "online" && runner.labels.map(l => l.name).includes("release")).map(runner => console.log(runner)))
 }
 
 runners()
