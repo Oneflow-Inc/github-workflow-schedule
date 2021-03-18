@@ -55,12 +55,14 @@ async function listAll() {
                 //     })
                 // })
                 if (shouldReRun) {
-                    console.log(wr.html_url)
+                    console.log("[re-run]", wr.html_url)
                     await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
                         owner: owner,
                         repo: repo,
                         run_id: wr.id
                     }).then(r => console.log("rerun", r.status))
+                } else {
+                    console.log("[ok]", wr.html_url)
                 }
             }
         )
