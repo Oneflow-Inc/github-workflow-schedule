@@ -76,9 +76,9 @@ async function reRun() {
                         owner: owner,
                         repo: repo,
                         run_id: wr.id
-                    }).then(r => console.log("rerun", r.status))
+                    }).then(r => console.log(console.log(`[rerun: ${r.status}]`, wr.html_url)))
                 } else {
-                    console.log("[ok]", wr.html_url)
+                    console.log("[skip]", wr.html_url)
                 }
             }
         )
