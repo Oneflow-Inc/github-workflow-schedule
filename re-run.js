@@ -27,33 +27,41 @@ async function listAll() {
             run_id: wr.id
         }).then(
             async r => {
-                shouldReRun = false
+                isNetworkFail = false
                 r.data.jobs.map(
                     j => j.steps.map(
                         s => {
                             if (s.name.includes("checkout") || s.name.includes("Set up job")) {
                                 if (s.status == 'completed' && s.conclusion == 'failure') {
-                                    shouldReRun = true
+                                    isNetworkFail = true
                                 }
                             }
                         }
                     )
                 )
-                // wr.pull_requests.map(async pr => {
-                //     base_sha = pr.base.sha
-                //     await octokit.request('GET /repos/{owner}/{repo}/compare/{base}...{head}', {
-                //         owner: owner,
-                //         repo: repo,
-                //         base: base_sha,
-                //         head: wr.head_sha
-                //     }).then(r => {
-                //         if (r.data.behind_by == 0) {
-                //             console.log({ ahead_by: r.data.ahead_by })
-                //         } else {
-                //             console.log({ behind_by: r.data.behind_by })
-                //         }
-                //     })
-                // })
+                isUpdatedPr = false
+                wr.pull_requests.map(async pr => {
+                    base_sha = pr.base.sha
+                    await octokit.request('GET /repos/{owner}/{repo}/compare/{base}...{head}', {
+                        owner: owner,
+                        repo: repo,
+                        base: base_sha,
+                        head: wr.head_sha
+                    }).then(async r => {
+                        if (r.data.behind_by == 0) {
+                            pr_detail = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
+                                owner: owner,
+                                repo: repo,
+                                pull_number: pr.number
+                            }).then(r => {
+                                if (r.data.state == "open") {
+                                    isUpdatedPr = true
+                                }
+                            })
+                        }
+                    })
+                })
+                shouldReRun = isUpdatedPr && isNetworkFail
                 if (shouldReRun) {
                     console.log("[re-run]", wr.html_url)
                     await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
