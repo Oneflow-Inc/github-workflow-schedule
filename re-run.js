@@ -43,7 +43,7 @@ async function reRun() {
                 isUpdatedPr = false
                 isLatestCommitInPr = false
                 if (wr.pull_requests.length == 0) {
-                    core.setOutput("[no pr related]", wr.html_url)
+                    console.log("[no pr related]", wr.html_url)
                 } else {
                     wr.pull_requests.map(async pr => {
                         if (pr.head.sha == wr.head_commit.id) {
@@ -65,11 +65,11 @@ async function reRun() {
                                     if (r.data.state == "open") {
                                         isUpdatedPr = true
                                     } else {
-                                        core.setOutput("[pr closed]", wr.html_url)
+                                        console.log("[pr closed]", wr.html_url)
                                     }
                                 })
                             } else {
-                                core.setOutput("[pr behind base]", wr.html_url)
+                                console.log("[pr behind base]", wr.html_url)
                             }
                         })
                     })
@@ -77,17 +77,19 @@ async function reRun() {
 
                 shouldReRun = isUpdatedPr && isNetworkFail && isLatestCommitInPr
                 if (shouldReRun) {
-                    core.setOutput("[re-run]", wr.html_url)
+                    console.log("[re-run]", wr.html_url)
                     await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
                         owner: owner,
                         repo: repo,
                         run_id: wr.id
                     }).then(r => console.log(console.log(`[rerun: ${r.status}]`, wr.html_url)))
                 }
-
-                if (isLatestCommitInPr == false || shaSeenBefore.has(wr.head_sha) || wr.pull_requests.length == 0 || isUpdatedPr == false) {
+                if (shaSeenBefore.has(wr.head_sha)) {
+                    console.log("[duplicated]", wr.html_url)
+                }
+                if (isLatestCommitInPr == false || shaSeenBefore.has(wr.head_sha) || wr.pull_requests.length == 0) {
                     if (['in_progress', 'queued'].includes(wr.status)) {
-                        core.setOutput("[cancel]", wr.html_url)
+                        console.log("[cancel]", wr.html_url)
                         await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel', {
                             owner: owner,
                             repo: repo,
