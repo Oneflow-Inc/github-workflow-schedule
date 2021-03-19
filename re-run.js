@@ -37,7 +37,6 @@ async function reRun() {
                                 ).filter(x => x == true).length > 0
                             ).filter(x => x == true).length > 0
                             var shaSeenBefore = new Set();
-                            isPrUpdatedAndOpen = false
                             const isLatestCommitInBranch = await octokit.request('GET /repos/{owner}/{repo}/branches/{branch}', {
                                 owner: owner,
                                 repo: repo,
@@ -51,7 +50,7 @@ async function reRun() {
                                 }
                             }).catch(e => true)
 
-                            isPrUpdatedAndOpen = await wr.pull_requests.reduce(async (acc, pr) => {
+                            const isPrUpdatedAndOpen = await wr.pull_requests.reduce(async (acc, pr) => {
                                 base_sha = pr.base.sha
                                 return await octokit.request('GET /repos/{owner}/{repo}/compare/{base}...{head}', {
                                     owner: owner,
