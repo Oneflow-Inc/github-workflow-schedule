@@ -25,8 +25,8 @@ async function reRun() {
             shaSeenBefore = new Set()
             r.data.workflow_runs.forEach(
                 async wr => {
-                    console.log(shaSeenBefore)
                     const isShaSeenBefore = shaSeenBefore.has(wr.head_sha)
+                    shaSeenBefore.add(wr.head_sha)
                     console.log("[processing]", wr.html_url)
                     const isNetworkFail = await octokit.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs', {
                         owner: owner,
@@ -130,7 +130,6 @@ async function reRun() {
                         isShaSeenBefore: isShaSeenBefore,
                         url: wr.html_url
                     })
-                    shaSeenBefore.add(wr.head_sha)
                     return shaSeenBefore
                 }
             )
