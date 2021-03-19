@@ -18,8 +18,7 @@ async function reRun() {
         owner: owner,
         repo: repo,
         workflow_id: test_workflow_id,
-        status: "failure",
-        per_page: 10
+        per_page: 50
     }).then(r => r.data.workflow_runs.map(async wr => {
         await octokit.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs', {
             owner: owner,
@@ -39,6 +38,7 @@ async function reRun() {
                         }
                     )
                 )
+                var shaSeenBefore = new Set();
                 isUpdatedPr = false
                 isLatestCommitInPr = false
                 if (wr.pull_requests.length == 0) {
@@ -76,6 +76,7 @@ async function reRun() {
                         })
                     })
                 }
+
                 shouldReRun = isUpdatedPr && isNetworkFail && isLatestCommitInPr
                 if (shouldReRun) {
                     console.log("[re-run]", wr.html_url)
@@ -84,9 +85,17 @@ async function reRun() {
                         repo: repo,
                         run_id: wr.id
                     }).then(r => console.log(console.log(`[rerun: ${r.status}]`, wr.html_url)))
-                } else {
-                    console.log("[skip]", wr.html_url)
                 }
+
+                if (isLatestCommitInPr == false && ['in_progress', 'queued'].includes(wr.status) && shaSeenBefore.has(wr.head_shaxw)) {
+                    console.log("[cancel]", wr.html_url)
+                    await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel', {
+                        owner: owner,
+                        repo: repo,
+                        run_id: wr.id
+                    })
+                }
+                shaSeenBefore.add(wr.head_sha)
             }
         )
     }))
