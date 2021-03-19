@@ -8,6 +8,7 @@ if (!token) {
 const octokit = new Octokit({ auth: token });
 const owner = 'Oneflow-Inc';
 const repo = 'oneflow';
+const core = require('@actions/core');
 
 async function reRun() {
     test_workflow_id = await octokit.request('GET /repos/{owner}/{repo}/actions/workflows', {
@@ -42,7 +43,7 @@ async function reRun() {
                 isUpdatedPr = false
                 isLatestCommitInPr = false
                 if (wr.pull_requests.length == 0) {
-                    console.log("[no pr related]", wr.html_url)
+                    core.setOutput("[no pr related]", wr.html_url)
                 } else {
                     wr.pull_requests.map(async pr => {
                         if (pr.head.sha == wr.head_commit.id) {
@@ -56,7 +57,7 @@ async function reRun() {
                             head: wr.head_sha
                         }).then(async r => {
                             if (r.data.behind_by == 0) {
-                                pr_detail = await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
+                                await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
                                     owner: owner,
                                     repo: repo,
                                     pull_number: pr.number
@@ -64,11 +65,11 @@ async function reRun() {
                                     if (r.data.state == "open") {
                                         isUpdatedPr = true
                                     } else {
-                                        console.log("[pr closed]", wr.html_url)
+                                        core.setOutput("[pr closed]", wr.html_url)
                                     }
                                 })
                             } else {
-                                console.log("[pr behind base]", wr.html_url)
+                                core.setOutput("[pr behind base]", wr.html_url)
                             }
                         })
                     })
@@ -76,7 +77,7 @@ async function reRun() {
 
                 shouldReRun = isUpdatedPr && isNetworkFail && isLatestCommitInPr
                 if (shouldReRun) {
-                    console.log("[re-run]", wr.html_url)
+                    core.setOutput("[re-run]", wr.html_url)
                     await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
                         owner: owner,
                         repo: repo,
@@ -86,7 +87,7 @@ async function reRun() {
 
                 if (isLatestCommitInPr == false || shaSeenBefore.has(wr.head_sha) || wr.pull_requests.length == 0 || isUpdatedPr == false) {
                     if (['in_progress', 'queued'].includes(wr.status)) {
-                        console.log("[cancel]", wr.html_url)
+                        core.setOutput("[cancel]", wr.html_url)
                         await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel', {
                             owner: owner,
                             repo: repo,
@@ -124,6 +125,5 @@ async function start() {
 }
 
 reRun().catch(e => {
-    const core = require('@actions/core');
     core.setFailed(e);
 })
