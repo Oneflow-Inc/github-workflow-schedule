@@ -40,42 +40,39 @@ async function reRun() {
                     )
                 )
                 var shaSeenBefore = new Set();
-                isUpdatedPr = false
+                isPrUpdatedAndOpen = false
                 isLatestCommitInPr = false
-                if (wr.pull_requests.length == 0) {
-                    console.log("[no pr related]", wr.html_url)
-                } else {
-                    wr.pull_requests.map(async pr => {
-                        if (pr.head.sha == wr.head_commit.id) {
-                            isLatestCommitInPr = true
+                wr.pull_requests.map(async pr => {
+                    if (pr.head.sha == wr.head_commit.id) {
+                        isLatestCommitInPr = true
+                    }
+                    base_sha = pr.base.sha
+                    await octokit.request('GET /repos/{owner}/{repo}/compare/{base}...{head}', {
+                        owner: owner,
+                        repo: repo,
+                        base: base_sha,
+                        head: wr.head_sha
+                    }).then(async r => {
+                        if (r.data.behind_by == 0) {
+                            await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
+                                owner: owner,
+                                repo: repo,
+                                pull_number: pr.number
+                            }).then(r => {
+                                if (r.data.state == "open") {
+                                    console.log("[pr updated]", wr.html_url)
+                                    isPrUpdatedAndOpen = true
+                                } else {
+                                    console.log("[pr closed]", wr.html_url)
+                                }
+                            })
+                        } else {
+                            console.log("[pr behind base]", wr.html_url)
                         }
-                        base_sha = pr.base.sha
-                        await octokit.request('GET /repos/{owner}/{repo}/compare/{base}...{head}', {
-                            owner: owner,
-                            repo: repo,
-                            base: base_sha,
-                            head: wr.head_sha
-                        }).then(async r => {
-                            if (r.data.behind_by == 0) {
-                                await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
-                                    owner: owner,
-                                    repo: repo,
-                                    pull_number: pr.number
-                                }).then(r => {
-                                    if (r.data.state == "open") {
-                                        isUpdatedPr = true
-                                    } else {
-                                        console.log("[pr closed]", wr.html_url)
-                                    }
-                                })
-                            } else {
-                                console.log("[pr behind base]", wr.html_url)
-                            }
-                        })
                     })
-                }
+                })
 
-                shouldReRun = isUpdatedPr && isNetworkFail && isLatestCommitInPr
+                shouldReRun = isPrUpdatedAndOpen && isNetworkFail && isLatestCommitInPr
                 if (shouldReRun) {
                     console.log("[re-run]", wr.html_url)
                     await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
@@ -87,26 +84,26 @@ async function reRun() {
                 if (shaSeenBefore.has(wr.head_sha)) {
                     console.log("[duplicated]", wr.html_url)
                 }
-                if (isLatestCommitInPr == false || shaSeenBefore.has(wr.head_sha) || wr.pull_requests.length == 0) {
-                    if (['in_progress', 'queued'].includes(wr.status)) {
+                if (['in_progress', 'queued'].includes(wr.status)) {
+                    if (isLatestCommitInPr == false || shaSeenBefore.has(wr.head_sha) || wr.pull_requests.length == 0) {
                         console.log("[cancel]", wr.html_url)
                         await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel', {
                             owner: owner,
                             repo: repo,
                             run_id: wr.id
                         })
-                        wr.pull_requests.map(async pr => {
-                            await octokit.request('POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers', {
-                                owner: owner,
-                                repo: repo,
-                                pull_number: pr.number,
-                                reviewers: [
-                                    'oneflow-ci-bot'
-                                ]
-                            })
-                        })
                     }
-
+                } else {
+                    wr.pull_requests.map(async pr => {
+                        await octokit.request('POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers', {
+                            owner: owner,
+                            repo: repo,
+                            pull_number: pr.number,
+                            reviewers: [
+                                'oneflow-ci-bot'
+                            ]
+                        })
+                    })
                 }
                 shaSeenBefore.add(wr.head_sha)
             }
