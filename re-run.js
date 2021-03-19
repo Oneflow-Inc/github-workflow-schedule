@@ -89,12 +89,18 @@ async function reRun() {
                             if (shaSeenBefore.has(wr.head_sha)) {
                                 console.log("[duplicated]", wr.html_url)
                             }
-                            if (isLatestCommitInPr == false) {
-                                console.log("[not LatestCommitInPr]", wr.html_url)
-                            }
                             if (['in_progress', 'queued'].includes(wr.status)) {
-                                if (isLatestCommitInPr == false || shaSeenBefore.has(wr.head_sha) || wr.pull_requests.length == 0) {
-                                    console.log("[cancel]", wr.html_url)
+                                commitOutdated = isLatestCommitInPr == false
+                                duplicated = shaSeenBefore.has(wr.head_sha)
+                                noPrReleated = wr.pull_requests.length == 0
+                                if (commitOutdated || duplicated || noPrReleated) {
+                                    reasons = [
+                                        (commitOutdated ? "not latest commit" : ""),
+                                        (duplicated ? "duplicated commit" : ""),
+                                        (noPrReleated ? "no PR releated" : ""),
+                                    ]
+                                    reason = reasons.join(", ")
+                                    console.log("[cancel]", `${reason}`, wr.html_url)
                                     // await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel', {
                                     //     owner: owner,
                                     //     repo: repo,
