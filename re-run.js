@@ -44,20 +44,22 @@ async function reRun() {
                             )
                             var shaSeenBefore = new Set();
                             isPrUpdatedAndOpen = false
-                            isLatestCommitInPr = false
+                            isLatestCommitInBranch = false
 
                             await octokit.request('GET /repos/{owner}/{repo}/branches/{branch}', {
                                 owner: owner,
                                 repo: repo,
                                 branch: wr.head_branch
                             }).then(r => {
-                                if (r.data.commit.id == wr.head_commit.id) {
-                                    isLatestCommitInPr = true
+                                if (r.data.commit.sha == wr.head_commit.id) {
+                                    isLatestCommitInBranch = true
+                                } else {
+                                    console.log(`[outdated commit: ${wr.head_branch}]`, `[latest: ${r.data.commit.sha}]`, `[head: ${wr.head_commit.id}]`, wr.html_url)
                                 }
                             })
                                 .catch(e => {
-                                    isLatestCommitInPr = true
-                                    console.log(wr.head_branch, "absent")
+                                    isLatestCommitInBranch = true
+                                    console.log(`[absent: ${wr.head_branch}]`, wr.html_url)
                                 })
                             await Promise.all(
                                 wr.pull_requests.map(async pr => {
@@ -88,7 +90,7 @@ async function reRun() {
                                 })
                             )
 
-                            shouldReRun = isPrUpdatedAndOpen && isNetworkFail && isLatestCommitInPr
+                            shouldReRun = isPrUpdatedAndOpen && isNetworkFail && isLatestCommitInBranch
                             if (shouldReRun) {
                                 console.log("[re-run]", wr.html_url)
                                 await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
@@ -101,7 +103,7 @@ async function reRun() {
                                 console.log("[duplicated]", wr.html_url)
                             }
                             if (['in_progress', 'queued'].includes(wr.status)) {
-                                commitOutdated = isLatestCommitInPr == false
+                                commitOutdated = isLatestCommitInBranch == false
                                 duplicated = shaSeenBefore.has(wr.head_sha)
                                 noPrReleated = wr.pull_requests.length == 0
                                 if (commitOutdated || duplicated || noPrReleated) {
@@ -112,14 +114,25 @@ async function reRun() {
                                     ]
                                     reason = reasons.filter(x => x != "").join(", ")
                                     console.log("[cancel]", `[${reason}]`, wr.html_url)
-                                    // await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel', {
-                                    //     owner: owner,
-                                    //     repo: repo,
-                                    //     run_id: wr.id
-                                    // })
+                                    await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel', {
+                                        owner: owner,
+                                        repo: repo,
+                                        run_id: wr.id
+                                    })
                                 }
                             } else {
-
+                                await Promise.all(
+                                    wr.pull_requests.map(async pr => {
+                                        await octokit.request('DELETE /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers', {
+                                            owner: owner,
+                                            repo: repo,
+                                            pull_number: pr.number,
+                                            reviewers: [
+                                                'oneflow-ci-bot'
+                                            ]
+                                        }).then(r => console.log("[remove reviewer]", wr.html_url))
+                                    })
+                                )
                             }
                             shaSeenBefore.add(wr.head_sha)
                         }
