@@ -47,9 +47,6 @@ async function reRun() {
                     wr.pull_requests.map(async pr => {
                         if (pr.head.sha == wr.head_commit.id) {
                             isLatestCommitInPr = true
-                            console.log("[latest commit in pr]", wr.html_url)
-                        } else {
-                            console.log("[outdated commit in pr]", wr.html_url)
                         }
                         base_sha = pr.base.sha
                         await octokit.request('GET /repos/{owner}/{repo}/compare/{base}...{head}', {
@@ -87,13 +84,15 @@ async function reRun() {
                     }).then(r => console.log(console.log(`[rerun: ${r.status}]`, wr.html_url)))
                 }
 
-                if (isLatestCommitInPr == false && ['in_progress', 'queued'].includes(wr.status) && shaSeenBefore.has(wr.head_shaxw)) {
-                    console.log("[cancel]", wr.html_url)
-                    await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel', {
-                        owner: owner,
-                        repo: repo,
-                        run_id: wr.id
-                    })
+                if (isLatestCommitInPr == false || shaSeenBefore.has(wr.head_sha) || wr.pull_requests.length == 0) {
+                    if (['in_progress', 'queued'].includes(wr.status)) {
+                        console.log("[cancel]", wr.html_url)
+                        await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel', {
+                            owner: owner,
+                            repo: repo,
+                            run_id: wr.id
+                        })
+                    }
                 }
                 shaSeenBefore.add(wr.head_sha)
             }
