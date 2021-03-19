@@ -76,15 +76,6 @@ async function reRun() {
                     }, false)
 
                     shouldReRun = isPrUpdatedAndOpen && isNetworkFail && isLatestCommitInBranch
-                    if (shouldReRun) {
-                        console.log("[re-run]", wr.html_url)
-                        await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
-                            owner: owner,
-                            repo: repo,
-                            run_id: wr.id
-                        }).then(r => console.log(console.log(`[rerun: ${r.status}]`, wr.html_url)))
-                    }
-
                     if (isShaSeenBefore) {
                         console.log("[duplicated]", wr.html_url)
                     }
@@ -105,6 +96,14 @@ async function reRun() {
                             })
                         }
                     } else {
+                        if (shouldReRun) {
+                            console.log("[re-run]", wr.html_url)
+                            await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
+                                owner: owner,
+                                repo: repo,
+                                run_id: wr.id
+                            }).then(r => console.log(console.log(`[rerun: ${r.status}]`, wr.html_url)))
+                        }
                         await Promise.all(
                             wr.pull_requests.map(async pr => {
                                 if (isPrUpdatedAndOpen) {
