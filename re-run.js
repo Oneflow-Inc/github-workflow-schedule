@@ -121,18 +121,18 @@ async function reRun() {
                                     })
                                 }
                             } else {
-                                await Promise.all(
-                                    wr.pull_requests.map(async pr => {
-                                        await octokit.request('DELETE /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers', {
-                                            owner: owner,
-                                            repo: repo,
-                                            pull_number: pr.number,
-                                            reviewers: [
-                                                'oneflow-ci-bot'
-                                            ]
-                                        }).then(r => console.log("[remove reviewer]", wr.html_url))
-                                    })
-                                )
+                                // await Promise.all(
+                                //     wr.pull_requests.map(async pr => {
+                                //         await octokit.request('DELETE /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers', {
+                                //             owner: owner,
+                                //             repo: repo,
+                                //             pull_number: pr.number,
+                                //             reviewers: [
+                                //                 'oneflow-ci-bot'
+                                //             ]
+                                //         }).then(r => console.log("[remove reviewer]", wr.html_url))
+                                //     })
+                                // )
                             }
                             shaSeenBefore.add(wr.head_sha)
                         }
