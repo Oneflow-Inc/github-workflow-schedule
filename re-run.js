@@ -92,7 +92,18 @@ async function reRun() {
                             repo: repo,
                             run_id: wr.id
                         })
+                        wr.pull_requests.map(async pr => {
+                            await octokit.request('POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers', {
+                                owner: owner,
+                                repo: repo,
+                                pull_number: pr.number,
+                                reviewers: [
+                                    'oneflow-ci-bot'
+                                ]
+                            })
+                        })
                     }
+
                 }
                 shaSeenBefore.add(wr.head_sha)
             }
