@@ -19,8 +19,7 @@ async function reRun() {
         owner: owner,
         repo: repo,
         workflow_id: test_workflow_id,
-        per_page: 20,
-        page: 2,
+        per_page: 30,
     }).then(
         r => {
             Promise.all(
@@ -39,23 +38,19 @@ async function reRun() {
                             ).filter(x => x == true).length > 0
                             var shaSeenBefore = new Set();
                             isPrUpdatedAndOpen = false
-                            isLatestCommitInBranch = false
-
-                            await octokit.request('GET /repos/{owner}/{repo}/branches/{branch}', {
+                            const isLatestCommitInBranch = await octokit.request('GET /repos/{owner}/{repo}/branches/{branch}', {
                                 owner: owner,
                                 repo: repo,
                                 branch: wr.head_branch
                             }).then(r => {
                                 if (r.data.commit.sha == wr.head_commit.id) {
-                                    isLatestCommitInBranch = true
+                                    return true
                                 } else {
                                     console.log(`[outdated commit: ${wr.head_branch}]`, `[latest: ${r.data.commit.sha}]`, `[head: ${wr.head_commit.id}]`, wr.html_url)
+                                    return false
                                 }
-                            })
-                                .catch(e => {
-                                    isLatestCommitInBranch = true
-                                    console.log(`[absent: ${wr.head_branch}]`, wr.html_url)
-                                })
+                            }).catch(e => true)
+
                             isPrUpdatedAndOpen = await wr.pull_requests.reduce(async (acc, pr) => {
                                 base_sha = pr.base.sha
                                 return await octokit.request('GET /repos/{owner}/{repo}/compare/{base}...{head}', {
@@ -87,19 +82,16 @@ async function reRun() {
                                     run_id: wr.id
                                 }).then(r => console.log(console.log(`[rerun: ${r.status}]`, wr.html_url)))
                             }
-                            isShaSeenBefore = false
-                            if (shaSeenBefore.has(wr.head_sha)) {
-                                isShaSeenBefore = true
+                            const isShaSeenBefore = shaSeenBefore.has(wr.head_sha)
+                            if (isShaSeenBefore) {
                                 console.log("[duplicated]", wr.html_url)
                             }
                             if (['in_progress', 'queued'].includes(wr.status)) {
-                                commitOutdated = isLatestCommitInBranch == false
-                                duplicated = shaSeenBefore.has(wr.head_sha)
-                                noPrReleated = wr.pull_requests.length == 0
-                                if (commitOutdated || duplicated || noPrReleated) {
+                                const noPrReleated = wr.pull_requests.length == 0
+                                if (isLatestCommitInBranch == false || isShaSeenBefore || noPrReleated) {
                                     reasons = [
-                                        (commitOutdated ? "not latest commit" : ""),
-                                        (duplicated ? "duplicated commit" : ""),
+                                        (isLatestCommitInBranch == false ? "not latest commit" : ""),
+                                        (isShaSeenBefore ? "duplicated commit" : ""),
                                         (noPrReleated ? "no PR releated" : ""),
                                     ]
                                     reason = reasons.filter(x => x != "").join(", ")
