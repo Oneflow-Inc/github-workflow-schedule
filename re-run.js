@@ -48,7 +48,7 @@ async function reRun() {
                                     console.log(`[outdated commit: ${wr.head_branch}]`, `[latest: ${r.data.commit.sha}]`, `[head: ${wr.head_commit.id}]`, wr.html_url)
                                     return false
                                 }
-                            }).catch(e => true)
+                            }).catch(e => false)
 
                             const isPrUpdatedAndOpen = await wr.pull_requests.reduce(async (acc, pr) => {
                                 base_sha = pr.base.sha
