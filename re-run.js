@@ -19,7 +19,7 @@ async function reRun() {
         owner: owner,
         repo: repo,
         workflow_id: test_workflow_id,
-        per_page: 50
+        per_page: 20
     }).then(
         r => {
             Promise.all(
@@ -45,11 +45,22 @@ async function reRun() {
                             var shaSeenBefore = new Set();
                             isPrUpdatedAndOpen = false
                             isLatestCommitInPr = false
+
+                            await octokit.request('GET /repos/{owner}/{repo}/branches/{branch}', {
+                                owner: owner,
+                                repo: repo,
+                                branch: wr.head_branch
+                            }).then(r => {
+                                if (r.data.commit.id == wr.head_commit.id) {
+                                    isLatestCommitInPr = true
+                                }
+                            })
+                                .catch(e => {
+                                    isLatestCommitInPr = true
+                                    console.log(wr.head_branch, "absent")
+                                })
                             await Promise.all(
                                 wr.pull_requests.map(async pr => {
-                                    if (pr.head.sha == wr.head_commit.id) {
-                                        isLatestCommitInPr = true
-                                    }
                                     base_sha = pr.base.sha
                                     await octokit.request('GET /repos/{owner}/{repo}/compare/{base}...{head}', {
                                         owner: owner,
@@ -99,8 +110,8 @@ async function reRun() {
                                         (duplicated ? "duplicated commit" : ""),
                                         (noPrReleated ? "no PR releated" : ""),
                                     ]
-                                    reason = reasons.join(", ")
-                                    console.log("[cancel]", `${reason}`, wr.html_url)
+                                    reason = reasons.filter(x => x != "").join(", ")
+                                    console.log("[cancel]", `[${reason}]`, wr.html_url)
                                     // await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel', {
                                     //     owner: owner,
                                     //     repo: repo,
@@ -108,18 +119,7 @@ async function reRun() {
                                     // })
                                 }
                             } else {
-                                await Promise.all(
-                                    wr.pull_requests.map(async pr => {
-                                        await octokit.request('POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers', {
-                                            owner: owner,
-                                            repo: repo,
-                                            pull_number: pr.number,
-                                            reviewers: [
-                                                'oneflow-ci-bot'
-                                            ]
-                                        })
-                                    })
-                                )
+
                             }
                             shaSeenBefore.add(wr.head_sha)
                         }
