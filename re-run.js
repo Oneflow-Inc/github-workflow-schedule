@@ -40,10 +40,17 @@ async function reRun() {
                     )
                 )
                 isUpdatedPr = false
+                isLatestCommitInPr = false
                 if (wr.pull_requests.length == 0) {
                     console.log("[no pr related]", wr.html_url)
                 } else {
                     wr.pull_requests.map(async pr => {
+                        if (pr.head.sha == wr.head_commit.id) {
+                            isLatestCommitInPr = true
+                            console.log("[latest commit in pr]", wr.html_url)
+                        } else {
+                            console.log("[outdated commit in pr]", wr.html_url)
+                        }
                         base_sha = pr.base.sha
                         await octokit.request('GET /repos/{owner}/{repo}/compare/{base}...{head}', {
                             owner: owner,
@@ -69,7 +76,7 @@ async function reRun() {
                         })
                     })
                 }
-                shouldReRun = isUpdatedPr && isNetworkFail
+                shouldReRun = isUpdatedPr && isNetworkFail && isLatestCommitInPr
                 if (shouldReRun) {
                     console.log("[re-run]", wr.html_url)
                     await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
