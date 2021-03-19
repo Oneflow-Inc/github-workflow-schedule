@@ -119,12 +119,14 @@ async function reRun() {
                                     })
                                 )
                             }
-                            console.log(wr.id, {
+                            console.log({
+                                id: wr.id,
                                 isPrUpdatedAndOpen: isPrUpdatedAndOpen,
                                 isNetworkFail: isNetworkFail,
                                 isLatestCommitInBranch: isLatestCommitInBranch,
                                 relatedPRSize: wr.pull_requests.length,
-                                isShaSeenBefore: isShaSeenBefore
+                                isShaSeenBefore: isShaSeenBefore,
+                                url: wr.html_url
                             })
                             shaSeenBefore.add(wr.head_sha)
                         }
