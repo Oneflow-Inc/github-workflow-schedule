@@ -84,7 +84,7 @@ async function reRun() {
                     }).then(r => console.log(console.log(`[rerun: ${r.status}]`, wr.html_url)))
                 }
 
-                if (isLatestCommitInPr == false || shaSeenBefore.has(wr.head_sha) || wr.pull_requests.length == 0) {
+                if (isLatestCommitInPr == false || shaSeenBefore.has(wr.head_sha) || wr.pull_requests.length == 0 || isUpdatedPr == false) {
                     if (['in_progress', 'queued'].includes(wr.status)) {
                         console.log("[cancel]", wr.html_url)
                         await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel', {
