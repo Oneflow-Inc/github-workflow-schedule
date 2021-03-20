@@ -6,11 +6,9 @@ if (!token) {
     process.exit(1)
 }
 const octokit = new Octokit({ auth: token });
-const owner = 'Oneflow-Inc';
-const repo = 'oneflow';
 const core = require('@actions/core');
 
-async function reRun() {
+async function reRun(owner, repo) {
     test_workflow_id = await octokit.request('GET /repos/{owner}/{repo}/actions/workflows', {
         owner: owner,
         repo: repo
@@ -147,7 +145,10 @@ async function start() {
         console.log('timeout', timeout, 's')
     }
 }
-
-reRun().catch(e => {
+const owner = 'Oneflow-Inc';
+reRun(owner, 'oneflow').catch(e => {
+    core.setFailed(e);
+})
+reRun(owner, 'oneflow_cambricon').catch(e => {
     core.setFailed(e);
 })
