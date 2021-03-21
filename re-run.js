@@ -94,6 +94,14 @@ async function reRun(owner, repo) {
                             })
                         }
                     } else {
+                        if (shouldReRun) {
+                            console.log("[re-run]", wr.html_url)
+                            await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
+                                owner: owner,
+                                repo: repo,
+                                run_id: wr.id
+                            }).then(r => console.log(console.log(`[rerun: ${r.status}]`, wr.html_url)))
+                        }
                         await Promise.all(
                             wr.pull_requests.map(async pr => {
                                 if (isPrUpdatedAndOpen) {
@@ -109,14 +117,6 @@ async function reRun(owner, repo) {
                                 }
                             })
                         )
-                    }
-                    if (shouldReRun) {
-                        console.log("[re-run]", wr.html_url)
-                        await octokit.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
-                            owner: owner,
-                            repo: repo,
-                            run_id: wr.id
-                        }).then(r => console.log(console.log(`[rerun: ${r.status}]`, wr.html_url)))
                     }
                     console.log({
                         id: wr.id,
