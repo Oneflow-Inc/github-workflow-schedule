@@ -116,7 +116,7 @@ async function reRun(owner, repo) {
                             owner: owner,
                             repo: repo,
                             run_id: wr.id
-                        }).then(r => console.log(console.log(`[rerun: ${r.status}]`, wr.html_url)))
+                        }).then(r => console.log(console.log(`[rerun: ${r.status}]`, wr.html_url))).catch(e => console.log("[rerun fail]", e))
                     }
                     console.log({
                         id: wr.id,
