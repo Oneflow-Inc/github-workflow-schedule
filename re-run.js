@@ -101,6 +101,7 @@ async function reRun(owner, repo) {
                                 repo: repo,
                                 run_id: wr.id
                             }).then(r => console.log(console.log(`[rerun: ${r.status}]`, wr.html_url)))
+                                .catch(e => console.log("[re-run fail]", e))
                         }
                         await Promise.all(
                             wr.pull_requests.map(async pr => {
