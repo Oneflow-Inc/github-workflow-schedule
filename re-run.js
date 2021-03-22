@@ -49,7 +49,7 @@ async function reRun(owner, repo) {
                             console.log(`[outdated commit: ${wr.head_branch}]`, `[latest: ${r.data.commit.sha}]`, `[head: ${wr.head_commit.id}]`, wr.html_url)
                             return false
                         }
-                    }).catch(e => false)
+                    }).catch(e => true)
 
                     const isPrUpdatedAndOpen = await wr.pull_requests.reduce(async (acc, pr) => {
                         base_sha = pr.base.sha
@@ -78,7 +78,7 @@ async function reRun(owner, repo) {
                         console.log("[duplicated]", wr.html_url)
                     }
                     if (['in_progress', 'queued'].includes(wr.status)) {
-                        const noPrReleated = wr.pull_requests.length == 0
+                        const noPrReleated = wr.pull_requests.length == 0 && wr.head_repository.owner == "Oneflow-Inc"
                         if (isLatestCommitInBranch == false || isShaSeenBefore || noPrReleated) {
                             reasons = [
                                 (isLatestCommitInBranch == false ? "not latest commit" : ""),
