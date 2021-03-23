@@ -78,7 +78,7 @@ async function reRun(owner, repo) {
                         console.log("[duplicated]", wr.html_url)
                     }
                     if (['in_progress', 'queued'].includes(wr.status)) {
-                        const noPrReleated = wr.pull_requests.length == 0 && wr.head_repository.owner == "Oneflow-Inc"
+                        const noPrReleated = wr.pull_requests.length == 0 && wr.head_repository.owner.login == "Oneflow-Inc"
                         if (isLatestCommitInBranch == false || isShaSeenBefore || noPrReleated) {
                             reasons = [
                                 (isLatestCommitInBranch == false ? "not latest commit" : ""),
@@ -126,7 +126,8 @@ async function reRun(owner, repo) {
                         isLatestCommitInBranch: isLatestCommitInBranch,
                         relatedPRSize: wr.pull_requests.length,
                         isShaSeenBefore: isShaSeenBefore,
-                        url: wr.html_url
+                        url: wr.html_url,
+                        head_repo: `${wr.head_repository.owner.login}/${wr.head_repository.name}`
                     })
                     return shaSeenBefore
                 }
