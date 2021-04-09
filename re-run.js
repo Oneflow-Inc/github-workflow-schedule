@@ -37,19 +37,20 @@ async function reRun(owner, repo) {
                             ).filter(x => x == true).length > 0
                         ).filter(x => x == true).length > 0
                     )
-
-                    const isLatestCommitInBranch = await octokit.request('GET /repos/{owner}/{repo}/branches/{branch}', {
-                        owner: owner,
-                        repo: repo,
-                        branch: wr.head_branch
-                    }).then(r => {
-                        if (r.data.commit.sha == wr.head_commit.id) {
-                            return true
-                        } else {
-                            console.log(`[outdated commit: ${wr.head_branch}]`, `[latest: ${r.data.commit.sha}]`, `[head: ${wr.head_commit.id}]`, wr.html_url)
-                            return false
-                        }
-                    }).catch(e => true)
+                    const isLatestCommitInBranch = wr.head_repository.owner.login == "Oneflow-Inc" && (
+                        await octokit.request('GET /repos/{owner}/{repo}/branches/{branch}', {
+                            owner: owner,
+                            repo: repo,
+                            branch: wr.head_branch
+                        }).then(r => {
+                            if (r.data.commit.sha == wr.head_commit.id) {
+                                return true
+                            } else {
+                                console.log(`[outdated commit: ${wr.head_branch}]`, `[latest: ${r.data.commit.sha}]`, `[head: ${wr.head_commit.id}]`, wr.html_url)
+                                return false
+                            }
+                        }).catch(e => true)
+                    )
 
                     const isPrUpdatedAndOpen = await wr.pull_requests.reduce(async (acc, pr) => {
                         base_sha = pr.base.sha
