@@ -98,7 +98,7 @@ async function start() {
   let i = 0;
   const max_try = 30
   const timeout_minutes = 1
-  let max_num_parallel = 2
+  let max_num_parallel = 1
   while (i < max_try) {
     i += 1;
     console.log('trying', i, '/', max_try)
